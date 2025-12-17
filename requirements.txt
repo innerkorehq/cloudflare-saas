@@ -1,0 +1,19 @@
+# Core async libraries
+cloudflare>=4.0.0
+aioboto3>=12.0.0
+aiodns>=3.1.0
+pydantic>=2.0.0
+python-terraform>=0.10.1
+httpx>=0.25.0
+tenacity>=8.2.0
+
+# Storage
+asyncpg>=0.29.0
+
+# Additional dependencies
+pycares>=4.3.0
+botocore>=1.31.0
+
+# Web framework (optional, for examples)
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0

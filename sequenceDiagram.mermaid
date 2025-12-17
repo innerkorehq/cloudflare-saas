@@ -1,0 +1,42 @@
+sequenceDiagram
+    participant U as 🧑‍💻 User / Customer
+    participant DNS as 🌐 DNS Provider
+    participant API as 🧩 Platform API
+    participant CF as ☁️ Cloudflare Edge / SaaS API
+    participant W as ⚙️ Cloudflare Worker
+    participant R2 as 🗄️ Cloudflare R2
+
+    %% Step 1: Request to add custom domain
+    U->>API: POST /v1/tenants/{tenant_id}/domains<br/>{"domain": "www.customer.com"}
+    API-->>U: Returns verification instructions<br/>"Add CNAME www.customer.com → tenant123.yourplatform.com"
+
+    %% Step 2: User adds CNAME
+    U->>DNS: Create CNAME record<br/>www.customer.com → tenant123.yourplatform.com
+
+    %% Step 3: Platform verifies
+    loop Every few minutes
+        API->>DNS: Check CNAME presence
+        DNS-->>API: CNAME found ✅
+    end
+
+    %% Step 4: Certificate provisioning
+    API->>CF: Create Custom Hostname via Cloudflare SaaS API
+    CF-->>API: TLS certificate provisioning started
+
+    %% Step 5: Cloudflare issues certificate
+    CF-->>CF: Validate DNS ownership automatically
+    CF-->>API: TLS certificate ready (status: active)
+
+    %% Step 6: Domain activated
+    API-->>U: Domain status = "active"
+    Note over U,CF: www.customer.com now points to your Cloudflare zone
+
+    %% Step 7: Serving requests
+    U->>CF: GET https://www.customer.com
+    CF->>W: Forward request (Edge Worker)
+    W->>API: Resolve host → tenant_id
+    API-->>W: tenant_id = tenant123
+    W->>R2: Fetch tenant123/index.html
+    R2-->>W: Returns file
+    W-->>CF: Cache-Control headers applied
+    CF-->>U: Serves page with TLS & CDN caching

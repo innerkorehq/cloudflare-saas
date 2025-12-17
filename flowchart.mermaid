@@ -1,0 +1,41 @@
+flowchart TD
+    subgraph Client["🌐 Client Browser"]
+        A1(["Request to tenant123.yourplatform.com or www.customer.com"])
+    end
+
+    subgraph Cloudflare["☁️ Cloudflare Edge"]
+        CF1(["Cloudflare CDN / Edge Cache"])
+        CF2(["Cloudflare Worker (Routing, Cache Control, Auth)"])
+        CF3(["Cloudflare TLS / Custom Hostnames (SaaS API manages certs)"])
+    end
+
+    subgraph Platform["🧩 Platform Backend (API)"]
+        API1(["REST API: /tenants, /domains, /deploy"])
+        API2(["Domain Verifier (CNAME check & TLS provisioning)"])
+        DB[("Database: tenant_id ↔ domain")]
+    end
+
+    subgraph Storage["🗄️ Cloudflare R2"]
+        R2B[("Bucket: yourplatform-sites / tenant-id/index.html, assets/*")]
+    end
+
+    A1 -->|DNS resolves| CF1
+    CF1 --> CF2
+    CF2 -->|Host lookup| API1
+    API1 --> DB
+    CF2 -->|Fetch site files| R2B
+    API2 -->|Verification status| DB
+    API2 -->|Custom Hostname API| CF3
+    CF3 -->|TLS cert ready| CF1
+
+    subgraph Deploy["🚀 Deployment Flow"]
+        DEV1(["Uploader / CI/CD"])
+        DEV1 -->|Upload via signed URL| API1
+        API1 -->|Put objects| R2B
+    end
+
+    style Client fill:#f3f9ff,stroke:#1f78d1,stroke-width:2px
+    style Cloudflare fill:#e6f7ff,stroke:#0c7cd5,stroke-width:2px
+    style Platform fill:#fef7e0,stroke:#e1a400,stroke-width:2px
+    style Storage fill:#eef9ee,stroke:#22a531,stroke-width:2px
+    style Deploy fill:#f5efff,stroke:#8c4fe3,stroke-width:2px

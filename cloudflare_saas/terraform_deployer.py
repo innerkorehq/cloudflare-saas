@@ -75,7 +75,7 @@ variable "internal_api_key" {{
 resource "cloudflare_r2_bucket" "sites" {{
   account_id = var.cloudflare_account_id
   name       = var.r2_bucket_name
-  location   = "auto"
+  location   = "EEUR"
 }}
 
 # Worker Script

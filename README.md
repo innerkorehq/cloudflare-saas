@@ -35,6 +35,28 @@ For development:
 pip install -e ".[dev,web]"
 ```
 
+## Scripts
+
+Working deployment and management scripts are available in the `scripts/` folder:
+
+- **`deploy_worker.py`** - Deploy Cloudflare Worker script via API
+- **`create_token_with_global_key.py`** - Create API tokens with proper permissions
+- **`create_r2_bucket.py`** - Create and manage R2 buckets
+- **`test_token_permissions.py`** - Test API token permissions (8 tests)
+
+See [`scripts/README.md`](scripts/README.md) for detailed usage instructions.
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+- **[Complete System Guide](docs/COMPLETE_SYSTEM.md)** - Full system overview and operational guide
+- **[DNS Setup Guide](docs/DNS_SETUP_GUIDE.md)** - Domain configuration for getai.page
+- **[Deployment Success](docs/DEPLOYMENT_SUCCESS.md)** - Deployment results and metrics
+- **[Permissions Guide](docs/PERMISSIONS_GUIDE.md)** - API token permissions and setup
+
+See [`docs/README.md`](docs/README.md) for a complete list of documentation files.
+
 ## Quick Start
 
 ### Basic Usage with Logging

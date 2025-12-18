@@ -9,7 +9,7 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
     name="cloudflare-saas",
-    version="1.0.0",
+    version="1.0.1",
     author="innerkore",
     description="Production-ready async library for multi-tenant SaaS platforms with Cloudflare R2 and Workers",
     long_description=long_description,
@@ -49,6 +49,7 @@ setup(
             "black>=23.0.0",
             "mypy>=1.5.0",
             "ruff>=0.1.0",
+            "bumpversion>=0.6.0",
         ],
         "web": [
             "fastapi>=0.104.0",

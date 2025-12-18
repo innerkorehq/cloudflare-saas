@@ -1,6 +1,7 @@
 """Deploy Cloudflare infrastructure with Terraform."""
 
 import asyncio
+import sys
 from pathlib import Path
 from cloudflare_saas import Config
 from cloudflare_saas.terraform_deployer import TerraformDeployer
@@ -31,7 +32,13 @@ async def main():
     print("  - Deploy Worker script")
     print("  - Configure Worker routes")
     
-    confirm = input("\nProceed with deployment? (yes/no): ")
+    # Skip confirmation in non-interactive mode
+    import os
+    if os.environ.get('CI') or not sys.stdout.isatty():
+        print("\nRunning in non-interactive mode, proceeding automatically...")
+        confirm = "yes"
+    else:
+        confirm = input("\nProceed with deployment? (yes/no): ")
     
     if confirm.lower() != "yes":
         print("Deployment cancelled")

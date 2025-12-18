@@ -1,4 +1,4 @@
-.PHONY: install test lint format clean build deploy docs help
+.PHONY: install test lint format clean build deploy docs help bump-major bump-minor bump-patch bump-release version
 
 help:
 	@echo "Cloudflare SaaS Platform - Available Commands:"
@@ -28,6 +28,13 @@ help:
 	@echo "  make deploy         Deploy to PyPI"
 	@echo "  make deploy-infra   Deploy infrastructure"
 	@echo "  make destroy-infra  Destroy infrastructure"
+	@echo ""
+	@echo "Versioning:"
+	@echo "  make bump-major     Bump major version (x.0.0)"
+	@echo "  make bump-minor     Bump minor version (x.y.0)"
+	@echo "  make bump-patch     Bump patch version (x.y.z)"
+	@echo "  make bump-release   Bump release version (removes pre-release)"
+	@echo "  make version        Show current version"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make docker-build   Build Docker image"
@@ -140,3 +147,23 @@ deploy: clean build
 deploy-test: clean build
 	@echo "Deploying to Test PyPI..."
 	twine upload --repository testpypi dist/*
+
+# Version bumping
+bump-major:
+	@echo "Bumping major version..."
+	bumpversion --allow-dirty major
+
+bump-minor:
+	@echo "Bumping minor version..."
+	bumpversion --allow-dirty minor
+
+bump-patch:
+	@echo "Bumping patch version..."
+	bumpversion --allow-dirty patch
+
+bump-release:
+	@echo "Bumping to release version..."
+	bumpversion --allow-dirty release
+
+version:
+	@echo "Current version: $(shell python -c "from cloudflare_saas import __version__; print(__version__)")"

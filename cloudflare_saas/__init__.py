@@ -37,7 +37,7 @@ from .cloudflare_client import CloudflareClient
 from .dns_verifier import DNSVerifier
 from .terraform_deployer import TerraformDeployer
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 __all__ = [
     "CloudflareSaaSPlatform",

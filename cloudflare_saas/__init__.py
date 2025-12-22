@@ -34,10 +34,11 @@ from .storage_adapter import StorageAdapter, InMemoryStorageAdapter
 from .postgres_adapter import PostgresStorageAdapter
 from .r2_client import R2Client
 from .cloudflare_client import CloudflareClient
+from .d1_client import D1Client
 from .dns_verifier import DNSVerifier
 from .terraform_deployer import TerraformDeployer
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 __all__ = [
     "CloudflareSaaSPlatform",
@@ -65,6 +66,7 @@ __all__ = [
     "PostgresStorageAdapter",
     "R2Client",
     "CloudflareClient",
+    "D1Client",
     "DNSVerifier",
     "TerraformDeployer",
 ]

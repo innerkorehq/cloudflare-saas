@@ -38,7 +38,7 @@ from .d1_client import D1Client
 from .dns_verifier import DNSVerifier
 from .terraform_deployer import TerraformDeployer
 
-__version__ = "1.0.5"
+__version__ = "1.0.7"
 
 __all__ = [
     "CloudflareSaaSPlatform",

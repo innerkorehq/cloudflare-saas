@@ -18,6 +18,7 @@ from .models import (
 )
 from .r2_client import R2Client
 from .cloudflare_client import CloudflareClient
+from .d1_client import D1Client
 from .dns_verifier import DNSVerifier
 from .storage_adapter import StorageAdapter, InMemoryStorageAdapter
 from .exceptions import (
@@ -43,6 +44,7 @@ class CloudflareSaaSPlatform(LoggerMixin):
         self.config = config
         self.r2 = R2Client(config)
         self.cloudflare = CloudflareClient(config)
+        self.d1 = D1Client(config) if config.d1_database_id else None
         self.dns = DNSVerifier()
         
         # Use provided storage or default to in-memory
@@ -146,7 +148,27 @@ class CloudflareSaaSPlatform(LoggerMixin):
     ) -> DeploymentResult:
         """Deploy static site for tenant."""
         self.logger.info(f"Starting deployment for tenant: {tenant_id}, path: {local_path}")
-        await self.get_tenant(tenant_id)
+        
+        # Try to get the tenant, create it if it doesn't exist
+        try:
+            tenant = await self.get_tenant(tenant_id)
+        except TenantNotFoundError:
+            self.logger.info(f"Tenant {tenant_id} not found, creating it automatically")
+            # Extract name from tenant_id (remove any suffix after last hyphen if it looks like an ID)
+            name_parts = tenant_id.rsplit('-', 1)
+            if len(name_parts) == 2 and name_parts[1].replace(' ', '').isdigit():
+                # Looks like "name-12345", use the name part
+                tenant_name = name_parts[0].replace('-', ' ').title()
+            else:
+                # Use tenant_id as name, replace hyphens with spaces
+                tenant_name = tenant_id.replace('-', ' ').title()
+            
+            tenant = await self.create_tenant(
+                name=tenant_name,
+                slug=tenant_id,
+                owner_id=None,
+                metadata={"auto_created": True, "source": "deployment"}
+            )
         
         local_dir = Path(local_path)
         if not local_dir.exists():

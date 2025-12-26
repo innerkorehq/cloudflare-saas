@@ -8,11 +8,36 @@ This folder contains the working scripts for deploying and managing the Cloudfla
 **Purpose:** Deploy Cloudflare Worker script via API  
 **Usage:** `python scripts/deploy_worker.py`  
 **What it does:**
-- Reads worker template from `cloudflare_saas/worker_template.js`
-- Creates metadata with R2 bindings and environment variables
+- Reads worker template from `cloudflare_saas/worker_template_d1.js`
+- Creates metadata with R2 and D1 bindings and environment variables
 - Uploads worker as ES module to Cloudflare
 - Creates/updates worker route for `*.getai.page/*`
 - Verifies deployment
+
+### 1.5. `create_d1_tables.py`
+**Purpose:** Create database tables in Cloudflare D1  
+**Usage:** `python scripts/create_d1_tables.py`  
+**What it does:**
+- Creates `domains` table with auto-managed timestamps
+- Sets up triggers for automatic `updated` field management
+- Creates indexes for performance
+- Verifies table creation
+
+**Database Schema:**
+```sql
+CREATE TABLE domains (
+    name TEXT NOT NULL,           -- Domain name (primary key part 1)
+    zone TEXT NOT NULL DEFAULT '{CLOUDFLARE_ZONE_ID}',  -- Zone (primary key part 2, from env)
+    tenant_id TEXT NOT NULL,      -- Associated tenant ID
+    created DATETIME DEFAULT CURRENT_TIMESTAMP,  -- Auto-managed
+    updated DATETIME DEFAULT CURRENT_TIMESTAMP,  -- Auto-managed via trigger
+    last_date DATETIME,           -- Manual last access date
+    PRIMARY KEY (name, zone)
+);
+
+-- Initial data inserted:
+-- www.botshub.com -> tenant-finaldemo
+```
 
 ### 2. `create_token_with_global_key.py`
 **Purpose:** Create API tokens with proper permissions using Global API Key  
@@ -60,10 +85,13 @@ python scripts/test_token_permissions.py
 # 2. Create R2 bucket (if needed)
 python scripts/create_r2_bucket.py
 
-# 3. Deploy worker
+# 3. Create D1 tables
+python scripts/create_d1_tables.py
+
+# 4. Deploy worker
 python scripts/deploy_worker.py
 
-# 4. Run full deployment example
+# 5. Run full deployment example
 python examples/full_deployment_example.py <folder> <tenant> <domain>
 ```
 
@@ -86,13 +114,19 @@ CLOUDFLARE_ZONE_ID=2cf1f02313c4ef76af3d62eb78bb906e
 
 # R2 Storage
 R2_BUCKET_NAME=getaipage
-R2_ENDPOINT=https://6451353ea5a8407bab6162abc42f5338.r2.cloudflarestorage.com
+R2_JURISDICTION=eu
+R2_ENDPOINT=https://6451353ea5a8407bab6162abc42f5338.eu.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID=<your-key>
 R2_SECRET_ACCESS_KEY=<your-secret>
+
+# D1 Database
+D1_DATABASE_ID=<your-d1-database-id>
+D1_JURISDICTION=eu
 
 # Platform
 PLATFORM_DOMAIN=getai.page
 WORKER_SCRIPT_NAME=getaipage-router
+WORKER_SCRIPT_TEMPLATE_NAME=worker_template_d1.js
 ```
 
 ## Dependencies

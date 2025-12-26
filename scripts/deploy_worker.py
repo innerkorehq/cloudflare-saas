@@ -24,8 +24,12 @@ load_dotenv()
 API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID")
+WORKER_SCRIPT_TEMPLATE_NAME = os.getenv("WORKER_SCRIPT_TEMPLATE_NAME", "worker_template_d1.js")
 WORKER_SCRIPT_NAME = os.getenv("WORKER_SCRIPT_NAME", "getaipage-router")
 R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "getaipage")
+R2_JURISDICTION = os.getenv("R2_JURISDICTION", "eu")  # R2 bucket region: eu, us, etc.
+D1_DATABASE_ID = os.getenv("D1_DATABASE_ID")
+D1_JURISDICTION = os.getenv("D1_JURISDICTION", "eu")  # D1 database jurisdiction
 PLATFORM_DOMAIN = os.getenv("PLATFORM_DOMAIN", "getai.page")
 INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "your-internal-api-key-here")
 
@@ -36,7 +40,7 @@ WORKER_ROUTES_URL = f"{BASE_URL}/zones/{ZONE_ID}/workers/routes"
 
 def read_worker_script():
     """Read the worker script template"""
-    script_path = Path(__file__).parent / "cloudflare_saas" / "worker_template.js"
+    script_path = Path(__file__).parent.parent / "cloudflare_saas" / WORKER_SCRIPT_TEMPLATE_NAME
     
     if not script_path.exists():
         print(f"❌ Worker script not found at: {script_path}")
@@ -46,22 +50,45 @@ def read_worker_script():
         return f.read()
 
 def create_worker_metadata():
-    """Create worker metadata with R2 bindings and environment variables"""
+    """Create worker metadata with R2 and D1 bindings and environment variables"""
     import json
+    
+    bindings = []
+    
+    # R2 binding
+    if R2_BUCKET_NAME:
+        r2_binding = {
+            "type": "r2_bucket",
+            "name": "MY_BUCKET",
+            "bucket_name": R2_BUCKET_NAME
+        }
+        # Add jurisdiction if specified (required for regional buckets)
+        if R2_JURISDICTION:
+            r2_binding["jurisdiction"] = R2_JURISDICTION
+        bindings.append(r2_binding)
+    
+    # D1 binding
+    if D1_DATABASE_ID:
+        d1_binding = {
+            "type": "d1",
+            "name": "DB",
+            "id": D1_DATABASE_ID
+        }
+        # Add jurisdiction if specified
+        if D1_JURISDICTION:
+            d1_binding["jurisdiction"] = D1_JURISDICTION
+        bindings.append(d1_binding)
+    
     return json.dumps({
         "main_module": "index.js",
-        "bindings": [
-            {
-                "type": "r2_bucket",
-                "name": "MY_BUCKET",
-                "bucket_name": R2_BUCKET_NAME
-            }
-        ],
+        "bindings": bindings,
         "compatibility_date": "2024-01-01",
         "compatibility_flags": ["nodejs_compat"],
         "vars": {
             "PLATFORM_DOMAIN": PLATFORM_DOMAIN,
-            "INTERNAL_API_KEY": INTERNAL_API_KEY
+            "INTERNAL_API_KEY": INTERNAL_API_KEY,
+            "DEFAULT_ZONE": "default",
+            "CACHE_MAX_SIZE": "1000"
         }
     })
 
@@ -70,6 +97,12 @@ async def deploy_worker_script():
     print(f"🚀 Deploying worker script: {WORKER_SCRIPT_NAME}")
     print(f"   Account ID: {ACCOUNT_ID}")
     print(f"   R2 Bucket: {R2_BUCKET_NAME}")
+    if R2_JURISDICTION:
+        print(f"   R2 Jurisdiction: {R2_JURISDICTION}")
+    if D1_DATABASE_ID:
+        print(f"   D1 Database: {D1_DATABASE_ID}")
+        if D1_JURISDICTION:
+            print(f"   D1 Jurisdiction: {D1_JURISDICTION}")
     print()
     
     # Read worker script
@@ -294,6 +327,8 @@ async def main():
     print("Worker Details:")
     print(f"   Name: {WORKER_SCRIPT_NAME}")
     print(f"   R2 Bucket: {R2_BUCKET_NAME}")
+    if D1_DATABASE_ID:
+        print(f"   D1 Database: {D1_DATABASE_ID}")
     print(f"   Route: *.{PLATFORM_DOMAIN}/*")
     print()
     print("Next Steps:")

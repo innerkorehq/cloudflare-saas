@@ -51,6 +51,14 @@ class CloudflareClient(LoggerMixin):
             
             self.logger.info(f"Successfully created custom hostname: {hostname}, id: {response.id}")
             
+            # Attach custom hostname to worker route
+            try:
+                await self._attach_hostname_to_worker(hostname)
+                self.logger.info(f"Attached custom hostname {hostname} to worker {self.config.worker_script_name}")
+            except Exception as route_error:
+                self.logger.warning(f"Failed to attach worker route for {hostname}: {route_error}")
+                # Don't fail the whole operation if route creation fails
+            
             return {
                 "id": response.id,
                 "hostname": response.hostname,
@@ -97,13 +105,30 @@ class CloudflareClient(LoggerMixin):
     async def delete_custom_hostname(
         self,
         hostname_id: str,
+        hostname: Optional[str] = None,
     ) -> None:
         """Delete custom hostname."""
         try:
+            # Get hostname if not provided
+            if not hostname:
+                hostname_info = await self.get_custom_hostname(hostname_id)
+                hostname = hostname_info.get("hostname")
+            
+            # Detach worker route first (before deleting the hostname)
+            if hostname:
+                try:
+                    await self._detach_hostname_from_worker(hostname)
+                    self.logger.info(f"Detached custom hostname {hostname} from worker")
+                except Exception as route_error:
+                    self.logger.warning(f"Failed to detach worker route for {hostname}: {route_error}")
+                    # Continue with deletion even if route removal fails
+            
+            # Delete the custom hostname
             await self.client.custom_hostnames.delete(
                 custom_hostname_id=hostname_id,
                 zone_id=self.config.cloudflare_zone_id,
             )
+            self.logger.info(f"Successfully deleted custom hostname: {hostname_id}")
         except Exception as e:
             raise CustomHostnameError(f"Failed to delete custom hostname: {e}")
     
@@ -133,3 +158,51 @@ class CloudflareClient(LoggerMixin):
             ]
         except Exception as e:
             raise CustomHostnameError(f"Failed to list custom hostnames: {e}")
+    
+    async def _attach_hostname_to_worker(self, hostname: str) -> Dict[str, Any]:
+        """Attach custom hostname to worker route."""
+        pattern = f"{hostname}/*"
+        
+        try:
+            response = await self.client.workers.routes.create(
+                zone_id=self.config.cloudflare_zone_id,
+                pattern=pattern,
+                script=self.config.worker_script_name,
+            )
+            
+            self.logger.info(f"Created worker route: {pattern} -> {self.config.worker_script_name}")
+            return {
+                "id": response.id,
+                "pattern": pattern,
+                "script": self.config.worker_script_name,
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to create worker route for {hostname}: {e}")
+            raise
+    
+    async def _detach_hostname_from_worker(self, hostname: str) -> None:
+        """Detach custom hostname from worker route."""
+        pattern = f"{hostname}/*"
+        
+        try:
+            # List all routes and find the matching one
+            routes_page = await self.client.workers.routes.list(
+                zone_id=self.config.cloudflare_zone_id,
+            )
+            
+            # Iterate through async iterator
+            async for route in routes_page:
+                # Route objects have direct attributes
+                if hasattr(route, 'pattern') and route.pattern == pattern:
+                    route_id = route.id
+                    await self.client.workers.routes.delete(
+                        route_id=route_id,
+                        zone_id=self.config.cloudflare_zone_id,
+                    )
+                    self.logger.info(f"Deleted worker route: {pattern}")
+                    return
+            
+            self.logger.warning(f"Worker route not found for pattern: {pattern}")
+        except Exception as e:
+            self.logger.error(f"Failed to delete worker route for {hostname}: {e}")
+            raise

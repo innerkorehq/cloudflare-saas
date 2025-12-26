@@ -18,10 +18,16 @@ class Config(BaseModel):
     r2_secret_access_key: str
     r2_bucket_name: str
     r2_endpoint: Optional[str] = None
+    r2_jurisdiction: Optional[str] = None
+    
+    # D1 Database configuration
+    d1_database_id: Optional[str] = None
+    d1_jurisdiction: Optional[str] = None
     
     # Platform configuration
     platform_domain: str
     worker_script_name: str = "site-router"
+    worker_script_template_name: Optional[str] = None
     internal_api_key: Optional[str] = None
     
     # Logging configuration
@@ -69,8 +75,12 @@ class Config(BaseModel):
         # Optional variables
         optional_vars = {
             'WORKER_SCRIPT_NAME': 'worker_script_name',
+            'WORKER_SCRIPT_TEMPLATE_NAME': 'worker_script_template_name',
             'INTERNAL_API_KEY': 'internal_api_key',
             'R2_ENDPOINT': 'r2_endpoint',
+            'R2_JURISDICTION': 'r2_jurisdiction',
+            'D1_DATABASE_ID': 'd1_database_id',
+            'D1_JURISDICTION': 'd1_jurisdiction',
             'LOG_LEVEL': 'log_level',
             'LOG_FORMAT': 'log_format',
             'LOG_FILE': 'log_file',

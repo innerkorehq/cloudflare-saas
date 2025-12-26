@@ -108,6 +108,8 @@ class CloudflareTokenCreatorWithGlobalKey:
             "Workers Scripts Read",         # List Worker scripts
             "Workers Scripts Write",        # Deploy Worker scripts
             "Workers Routes Write",         # Configure Worker routes
+            "D1 Read",                      # Query D1 databases
+            "D1 Write",                     # Modify D1 databases
         ]
 
         # Required Zone-level permissions
@@ -182,7 +184,7 @@ class CloudflareTokenCreatorWithGlobalKey:
         # Print available permissions for debugging
         print("\n📋 Available Account Permissions:")
         for name, perm_id in sorted(permission_map.items()):
-            if any(keyword in name.lower() for keyword in ['account', 'r2', 'worker']):
+            if any(keyword in name.lower() for keyword in ['account', 'r2', 'worker', 'd1']):
                 print(f"   - {name}")
 
         print("\n📋 Available Zone Permissions:")

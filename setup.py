@@ -9,7 +9,7 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
     name="cloudflare-saas",
-    version="1.0.7",
+    version="1.0.8",
     author="innerkore",
     description="Production-ready async library for multi-tenant SaaS platforms with Cloudflare R2 and Workers",
     long_description=long_description,
@@ -31,7 +31,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "cloudflare>=4.0.0",
-        "aioboto3>=12.0.0",
+        "aiobotocore>=2.5.0",
         "aiodns>=3.1.0",
         "pydantic>=2.0.0",
         "python-terraform>=0.10.1",

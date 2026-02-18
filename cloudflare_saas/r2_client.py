@@ -1,4 +1,4 @@
-"""R2 client for bucket operations using aioboto3."""
+"""R2 client for bucket operations using aiobotocore."""
 
 import asyncio
 import os
@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, AsyncIterator
 from contextlib import asynccontextmanager
 
-import aioboto3
+from aiobotocore.session import get_session
 from botocore.exceptions import ClientError
 from tenacity import (
     retry,
@@ -26,19 +26,18 @@ class R2Client(LoggerMixin):
     
     def __init__(self, config: Config):
         self.config = config
-        self.session = aioboto3.Session(
-            aws_access_key_id=config.r2_access_key_id,
-            aws_secret_access_key=config.r2_secret_access_key,
-        )
+        self.session = get_session()
         self.logger.info(f"Initialized R2Client for bucket: {config.r2_bucket_name}")
     
     @asynccontextmanager
     async def _get_client(self):
         """Get S3 client context manager."""
-        async with self.session.client(
+        async with self.session.create_client(
             's3',
             endpoint_url=self.config.r2_endpoint,
             region_name='auto',
+            aws_access_key_id=self.config.r2_access_key_id,
+            aws_secret_access_key=self.config.r2_secret_access_key,
         ) as client:
             yield client
     

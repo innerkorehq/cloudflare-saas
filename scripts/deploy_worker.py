@@ -78,18 +78,27 @@ def create_worker_metadata():
         if D1_JURISDICTION:
             d1_binding["jurisdiction"] = D1_JURISDICTION
         bindings.append(d1_binding)
-    
+
+    # Plain-text environment variable bindings
+    env_vars = {
+        "PLATFORM_DOMAIN": PLATFORM_DOMAIN,
+        "INTERNAL_API_KEY": INTERNAL_API_KEY,
+        "DEFAULT_ZONE": "default",
+        "CACHE_MAX_SIZE": "1000",
+    }
+    for name, value in env_vars.items():
+        if value is not None:
+            bindings.append({
+                "type": "plain_text",
+                "name": name,
+                "text": str(value),
+            })
+
     return json.dumps({
         "main_module": "index.js",
         "bindings": bindings,
         "compatibility_date": "2024-01-01",
         "compatibility_flags": ["nodejs_compat"],
-        "vars": {
-            "PLATFORM_DOMAIN": PLATFORM_DOMAIN,
-            "INTERNAL_API_KEY": INTERNAL_API_KEY,
-            "DEFAULT_ZONE": "default",
-            "CACHE_MAX_SIZE": "1000"
-        }
     })
 
 async def deploy_worker_script():
